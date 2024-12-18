@@ -1,4 +1,4 @@
-# Analysis of variable domain-encoding gene expression in the ferret
+# Analysis of variable domain-encoding Ig gene expression in the ferret
 
 ## A. Filtering and mapping
 1. *Quality control filtering and merging:* The script `trim_merge.py` was used on all B cell receptor (variable gene-containing) Illumina paired-end read (FASTQ.GZ) files. This script calls a local instantiation of [Cutadapt](https://cutadapt.readthedocs.io/en/stable/) and [PEAR](https://github.com/tseemann/PEAR).
