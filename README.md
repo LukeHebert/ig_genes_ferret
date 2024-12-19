@@ -11,7 +11,7 @@ A detailed workflow of how I (and colleagues) predicted _Mustela mutorius furo_ 
 # Dependencies
 
 ### Python packages
-All python dependencies are listed in the environment.yml (Conda environment) file.
+All python dependencies are listed in the `environment.yml` (Conda environment) file.
 
 ### Other tools
 Non-python package bioinformatics tools called by the scripts in this repository include:
