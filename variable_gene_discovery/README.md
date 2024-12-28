@@ -1,7 +1,7 @@
 # Immunoglobulin (Ig) Variable Domain Gene Discovery Workflow
 ---------
 ## A. BLAST querying Ig genes from related species against the ferret genome.
-1. **Retrieving Ig genes of related species:** From [IMGT](https://www.imgt.org/vquest/refseqh.html#:~:text=IG%20%22V-REGION%22%2C%20%22D-REGION%22%2C%20%22J-REGION%22%2C%20%22C-GENE%20exon%22%20sets), I downloaded FASTA files of all (variable domain-encoding) gene types from multiple species. In this case, downloaded IGHV, IGKV, IGLV, IGHJ, IGKJ, IGLJ, IGHD files for human (*Homo sapiens*), dog (*Canis lupis familiaris*), and cat (*Felis catus*). These species were chosen for biomedical and phylogenetic relevance to the ferret (*Mustela putorius furo*).
+1. <**Retrieving Ig genes of related species:**> From [IMGT](https://www.imgt.org/vquest/refseqh.html#:~:text=IG%20%22V-REGION%22%2C%20%22D-REGION%22%2C%20%22J-REGION%22%2C%20%22C-GENE%20exon%22%20sets), I downloaded FASTA files of all (variable domain-encoding) gene types from multiple species. In this case, downloaded IGHV, IGKV, IGLV, IGHJ, IGKJ, IGLJ, IGHD files for human (*Homo sapiens*), dog (*Canis lupis familiaris*), and cat (*Felis catus*). These species were chosen for biomedical and phylogenetic relevance to the ferret (*Mustela putorius furo*).
 
 2. **Reformatting as BLAST queries:** To all files of a given gene segment type (e.g. IGHVs and IGKVs are both segment type "V"), I applied `tidy_imgt_queries.py` to produce a single FASTA containing segment specific DNA sequences across species. The result was three multi-species FASTAs, one for all Vs, one for all Ds, and one for all Js. These were now reformatted to be used as BLAST queries.
 
