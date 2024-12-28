@@ -26,5 +26,7 @@
 
 ## C. Assigning functionality labels to gene candidates.
 1. <ins>**Assigning genome-based functionality labels (functional, ORF, pseudogene) using IMGT's criteria:**</ins> The `assign_functionality.py` script was used to apply [IMGT's functionality criteria](https://pubmed.ncbi.nlm.nih.gov/20433708/) (doi: 10.1186/1471-2105-11-223) to annotated gene candidates from steps A & B.
+   
 2. <ins>**Making FASTAs for downstream transcriptomic analysis:**</ins> From the resulting TSV file, gene nucleotide sequences and identities (names) were extracted to make a FASTA file using `make_ig_gene_fastas.py`
+   
 3. <ins>**Rounding out discovered loci**</ins> Finally, in case this overarching BLAST->annotate->assign approach did not catch some trailing previously-discovered loci, the FASTA sequences from step C2 were supplemented with [IMGT's ferret sequences](https://www.imgt.org/vquest/refseqh.html#:~:text=IG%20%22V-REGION%22%2C%20%22D-REGION%22%2C%20%22J-REGION%22%2C%20%22C-GENE%20exon%22%20sets) using `supplement_imgt_seqs.py`
