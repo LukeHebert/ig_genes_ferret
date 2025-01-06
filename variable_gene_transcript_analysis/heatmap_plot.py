@@ -169,6 +169,12 @@ def main():
             linecolor='black'      # Set border color to black
         )
 
+        # Force row labels to be horizontal
+        clustermap.ax_heatmap.set_yticklabels(
+            clustermap.ax_heatmap.get_ymajorticklabels(),
+            rotation=0
+        )
+        
         # Ensure that the rightmost and bottommost borders have black lines
         for _, spine in clustermap.ax_heatmap.spines.items():
             spine.set_visible(True)
