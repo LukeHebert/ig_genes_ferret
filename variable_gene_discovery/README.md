@@ -1,4 +1,4 @@
-# Immunoglobulin (Ig) Variable Domain Gene Discovery Workflow
+# Immunoglobulin (Ig) Variable Domain Gene Prediction Workflow
 ---------
 ## A. BLAST querying Ig genes from related species against the ferret genome.
 1. <ins>**Retrieving Ig genes of related species:**</ins> From [IMGT](https://www.imgt.org/vquest/refseqh.html#:~:text=IG%20%22V-REGION%22%2C%20%22D-REGION%22%2C%20%22J-REGION%22%2C%20%22C-GENE%20exon%22%20sets), I downloaded FASTA files of all (variable domain-encoding) gene types from multiple species. In this case, downloaded IGHV, IGKV, IGLV, IGHJ, IGKJ, IGLJ, IGHD files for human (*Homo sapiens*), dog (*Canis lupis familiaris*), and cat (*Felis catus*). These species were chosen for biomedical and phylogenetic relevance to the ferret (*Mustela putorius furo*).
@@ -24,7 +24,7 @@
 
 5. <ins>**Merging Digger results with our in-house results:**</ins> Unfortunately, the results from Digger suggest thousands of each gene type (e.g. thousands of IGHJ genes) which is exceedingly unlikely to be biologically real. But the purpose of Digger in our workflow is not gene discovery *per se*, but to use its inevitably overlapping results to help annotate our candidate gene loci. So, Digger annotations were merged with ours using the `combine_digger_genig.py` script which takes the aforementioned annottaed files from stsep B3 and Digger output files as input. The `format_overlapping_results.py` script was used to combine all `combine_digger_genig.py` output files and reformat them for the next step.
 
-## C. Assigning functionality labels to gene candidates.
+## C. Assigning (predicted) functionality labels to gene candidates.
 1. <ins>**Assigning genome-based functionality labels (functional, ORF, pseudogene) using IMGT's criteria:**</ins> The `assign_functionality.py` script was used to apply [IMGT's functionality criteria](https://pubmed.ncbi.nlm.nih.gov/20433708/) (doi: 10.1186/1471-2105-11-223) to annotated gene candidates from steps A & B.
    
 2. <ins>**Making FASTAs for downstream transcriptomic analysis:**</ins> From the resulting TSV file, gene nucleotide sequences and identities (names) were extracted to make a FASTA file using `make_ig_gene_fastas.py`
