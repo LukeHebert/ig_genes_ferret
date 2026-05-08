@@ -5,8 +5,54 @@ python v_analysis.py --help
 import argparse
 import os
 import subprocess
+import sys
 import pandas as pd
 from Bio.Seq import Seq
+
+
+def validate_file(path, description):
+    """Raise a clear error if a required file does not exist."""
+    if not os.path.isfile(path):
+        raise FileNotFoundError(f"{description} was not found: {path}")
+    return os.path.abspath(path)
+
+
+def validate_executable(path, description):
+    """Raise a clear error if a required executable path is invalid."""
+    executable_path = validate_file(path, description)
+    if not os.access(executable_path, os.X_OK):
+        raise PermissionError(f"{description} is not executable: {executable_path}")
+    return executable_path
+
+
+def validate_directory(path, description):
+    """Raise a clear error if a required directory does not exist."""
+    if not os.path.isdir(path):
+        raise NotADirectoryError(f"{description} was not found: {path}")
+    return os.path.abspath(path)
+
+
+def build_igblast_paths(igblast_data_dir, species):
+    """Build the species-specific IgBLAST data paths."""
+    data_dir = validate_directory(igblast_data_dir, "IgBLAST data directory")
+    internal_dir = validate_directory(
+        os.path.join(data_dir, "internal_data"),
+        "IgBLAST internal_data directory",
+    )
+    optional_dir = validate_directory(
+        os.path.join(data_dir, "optional_file"),
+        "IgBLAST optional_file directory",
+    )
+    species_dir = validate_directory(
+        os.path.join(internal_dir, species),
+        f"IgBLAST species directory for '{species}'",
+    )
+    return {
+        "v": validate_file(os.path.join(species_dir, f"{species}_V"), f"IgBLAST V database for '{species}'"),
+        "j": validate_file(os.path.join(species_dir, f"{species}_J"), f"IgBLAST J database for '{species}'"),
+        "d": validate_file(os.path.join(species_dir, f"{species}_D"), f"IgBLAST D database for '{species}'"),
+        "aux": validate_file(os.path.join(optional_dir, f"{species}_gl.aux"), f"IgBLAST auxiliary file for '{species}'"),
+    }
 
 def create_fasta(data, output_dir, input_file):
     base_name = os.path.basename(input_file).replace('.tsv', '_igblast.fasta')
@@ -18,33 +64,31 @@ def create_fasta(data, output_dir, input_file):
             fasta_file.write(f">{header}\n{sequence}\n")
     return fasta_filename
 
-def call_igblast(infile, species, output_dir, input_file):
+def call_igblast(infile, species, igblast_path, igblast_data_paths):
     """ Calls BLAST-based NCBI tool IgBLAST for mapping and annotating gene elements from BCR mRNA sequences."""
-
-    # Define the output file names
     outnametsv = infile.replace('.fasta', '.tsv')
-    
-    # Define the IgBLAST directory and executable path
-    igblast_dir = '/stor/work/Georgiou/Sharing_Folder/IgBLAST_1.21.0/ncbi-igblast-1.21.0'
-    igblastn = os.path.join(igblast_dir, 'bin/igblastn')
-    script_dir = os.getcwd()
-    
-    # Construct the command to call IgBLAST with the appropriate parameters and redirect output
-    command = (
-        f"cd {igblast_dir}; "
-        f"{igblastn} "
-        f"-germline_db_V internal_data/{species}/{species}_V "
-        f"-germline_db_J internal_data/{species}/{species}_J "
-        f"-germline_db_D internal_data/{species}/{species}_D "
-        f"-auxiliary_data optional_file/{species}_gl.aux "
-        f"-organism {species} "
-        f"-query {script_dir}/{infile} "
-        f"-outfmt 19 "
-        f"-out {script_dir}/{outnametsv} "
-    )
+    command = [
+        igblast_path,
+        "-germline_db_V",
+        igblast_data_paths["v"],
+        "-germline_db_J",
+        igblast_data_paths["j"],
+        "-germline_db_D",
+        igblast_data_paths["d"],
+        "-auxiliary_data",
+        igblast_data_paths["aux"],
+        "-organism",
+        species,
+        "-query",
+        infile,
+        "-outfmt",
+        "19",
+        "-out",
+        outnametsv,
+    ]
     
     print('\tCalling IgBLAST to assign FRs & CDRs...')
-    subprocess.run(command, shell=True, check=True)
+    subprocess.run(command, check=True)
     return outnametsv
 
 def merge_igblast_results(original_data, igblast_output, output_dir):
@@ -181,10 +225,20 @@ def create_fasta_for_signalp(data, output_dir):
         print(f"Total skipped sequences: {skipped_count}")  # Log how many sequences were skipped
     return fasta_path
 
-def run_signalp(fasta_path, output_dir):
+def run_signalp(fasta_path, output_dir, signalp_path):
     signalp_output_prefix = os.path.join(output_dir, 'leader_candidates')
-    cmd = f"signalp -fasta {fasta_path} -org euk -format short -prefix {signalp_output_prefix}"
-    subprocess.run(cmd, shell=True, check=True)
+    cmd = [
+        signalp_path,
+        "-fasta",
+        fasta_path,
+        "-org",
+        "euk",
+        "-format",
+        "short",
+        "-prefix",
+        signalp_output_prefix,
+    ]
+    subprocess.run(cmd, check=True)
     return f"{signalp_output_prefix}_summary.signalp5"
 
 def parse_signalp_output(signalp_output_path):
@@ -216,15 +270,21 @@ def find_best_leader_combination(data):
     return data
 
 def main(args):
-    output_dir = os.path.dirname(args.input_file)
+    input_file = validate_file(args.input_file, "Input TSV file")
+    leader_file = validate_file(args.leader_file, "Leader sequence TSV file")
+    igblast_path = validate_executable(args.igblast_path, "IgBLAST executable")
+    signalp_path = validate_executable(args.signalp_path, "SignalP executable")
+    igblast_data_paths = build_igblast_paths(args.igblast_data_dir, args.species)
+
+    output_dir = os.path.dirname(input_file)
     # Read input TSV
-    data = pd.read_csv(args.input_file, sep='\t')
+    data = pd.read_csv(input_file, sep='\t')
     # Read leader sequences
-    leader_sequences = read_leader_sequences(args.leader_file)
+    leader_sequences = read_leader_sequences(leader_file)
     
     # Perform IgBLAST analysis
-    fasta_file = create_fasta(data, output_dir, args.input_file)
-    igblast_output = call_igblast(fasta_file, args.species, output_dir, args.input_file)
+    fasta_file = create_fasta(data, output_dir, input_file)
+    igblast_output = call_igblast(fasta_file, args.species, igblast_path, igblast_data_paths)
     # Merge FR & CDR data with the original putative Ig gene loci data
     data = merge_igblast_results(data, igblast_output, output_dir)
     
@@ -234,7 +294,7 @@ def main(args):
     # First round of SignalP
     print('\tCalling SignalP-5.0 to analyze candidate leader sequences combinations..')
     fasta_path = create_fasta_for_signalp(data, output_dir)
-    signalp_output = run_signalp(fasta_path, output_dir)
+    signalp_output = run_signalp(fasta_path, output_dir, signalp_path)
     signalp_scores = parse_signalp_output(signalp_output)
     data = map_signalp_scores_to_data(data, signalp_scores)
     
@@ -254,8 +314,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process TSV file of partially annotated BLAST hits for FR, CDR, and leader peptide identification.")
     parser.add_argument('input_file', type=str, help='Input TSV file containing the required columns.')
     parser.add_argument('--species', type=str, default='human', help='Species for IgBLAST reference dataset.')
-    parser.add_argument('--leader_file', type=str, help='TSV file containing leader sequences.')
+    parser.add_argument('--leader_file', type=str, required=True, help='TSV file containing leader sequences.')
+    parser.add_argument('--igblast_path', type=str, required=True, help='Path to the IgBLAST executable (igblastn).')
+    parser.add_argument('--igblast_data_dir', type=str, required=True, help='Base directory containing IgBLAST internal_data and optional_file directories.')
+    parser.add_argument('--signalp_path', type=str, required=True, help='Path to the SignalP executable.')
     parser.add_argument('--num_best', type=int, default=3, help='Number of best Hamming distances to consider when aligning putative leader/signal sequences.')
     args = parser.parse_args()
-    main(args)
+    try:
+        main(args)
+    except (FileNotFoundError, PermissionError, NotADirectoryError) as error:
+        print(error, file=sys.stderr)
+        sys.exit(1)
 

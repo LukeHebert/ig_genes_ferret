@@ -7,7 +7,9 @@
 
 3. <ins>**Setting up BLAST database:**</ins> I created a [local BLAST database](https://www.ncbi.nlm.nih.gov/books/NBK569841/) from the most recent ferret genome assembly, [ASM1176430v1.1](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_011764305.1/).
 
-4. <ins>**Performing BLAST search:**</ins> I used [local BLAST](https://blast.ncbi.nlm.nih.gov/doc/blast-help/downloadblastdata.html#downloadblastdata) parameters detailed in `v_blast_query.sh`, `d_blast_query.sh`, and `j_blast_query.sh` to search the ferret genome using reformatted IMGT sequences.
+4. <ins>**Performing BLAST search:**</ins> I used [local BLAST](https://blast.ncbi.nlm.nih.gov/doc/blast-help/downloadblastdata.html#downloadblastdata) parameters detailed in `v_blast_query.sh`, `d_blast_query.sh`, and `j_blast_query.sh` to search the ferret genome using reformatted IMGT sequences. Each wrapper now expects the path to `blastn` as its first argument, for example:
+
+`bash v_blast_query.sh /path/to/blastn`
 
 5. <ins>**Keep longest overlapping hits:**</ins> I ran `overlap_filter.py` on each of the resulting BLAST hit TSV files to apply a sweep-line algorithm that keeps only the longest BLAST hit for any overlapping group of hits. 
 ## B. Annotating Ig gene features.
@@ -16,7 +18,9 @@
 2. <ins>**Evaluating flanking sequences for RSS candidates:**</ins> Results from the previous step, for each gene type, were combined using commands detailed in `combine_distinct_seqs.sh` and the output was used to run `rss_finder.py`. The `rss_finder.py` script produces seven files, one for each chain-specific gene segment type. `rss_finder.py` requires a pickle file of known RSSs. I procured my own in the same format as [IgDetective](https://github.com/Immunotools/IgDetective)'s "motif" file, but with added, non-redundant RSS sequences from diverse species including those reported by [Ramsden *et al.* 1994](https://pubmed.ncbi.nlm.nih.gov/8208601/) (doi: 10.1093/nar/22.10.1785) and by the makers of [RSSsite](https://www.itb.cnr.it/rss/extratdata.html). This step could be improved in future iterations by also including RSSs from more species provided by [IMGT](https://www.imgt.org/genedb/).
 
 3. <ins>**Finding adjacent and internal motifs for the three gene types:**</ins> The three V gene result files from the previous step were passed to `v_analysis.py`, the one IGHD gene result file was passed to `d_analysis.py`, and the three J gene files were passed to `j_analysis.py`. Each script does the following:
-- `v_analysis.py`: Annotates sequences by finding V1 & V2 leader sequences (powered by consensus sequences taken from known [IMGT ferret leader sequences](https://www.imgt.org/genedb/) and a local version [SignalP-5.0](https://services.healthtech.dtu.dk/services/SignalP-5.0/)), and framework regions + complementarity determining regions (powered by [IgBLAST](https://ncbi.github.io/igblast/cook/How-to-set-up.html) with a reference database of a related species or, in this case, [IMGT-reported ferret sequences](https://www.imgt.org/vquest/refseqh.html#:~:text=IG%20%22V-REGION%22%2C%20%22D-REGION%22%2C%20%22J-REGION%22%2C%20%22C-GENE%20exon%22%20sets)). 
+- `v_analysis.py`: Annotates sequences by finding V1 & V2 leader sequences (powered by consensus sequences taken from known [IMGT ferret leader sequences](https://www.imgt.org/genedb/) and [SignalP-5.0](https://services.healthtech.dtu.dk/services/SignalP-5.0/)), and framework regions + complementarity determining regions (powered by [IgBLAST](https://ncbi.github.io/igblast/cook/How-to-set-up.html) with a reference database of a related species or, in this case, [IMGT-reported ferret sequences](https://www.imgt.org/vquest/refseqh.html#:~:text=IG%20%22V-REGION%22%2C%20%22D-REGION%22%2C%20%22J-REGION%22%2C%20%22C-GENE%20exon%22%20sets)). You now provide the paths to `igblastn`, the base IgBLAST data directory, and `signalp` on the command line, for example:
+
+`python v_analysis.py input.tsv --species ferret --leader_file leaders.tsv --igblast_path /path/to/igblastn --igblast_data_dir /path/to/igblast_data --signalp_path /path/to/signalp`
 - `d_analysis.py`: Annotates sequences by finding translation frames
 - `j_analysis.py`: Annotates sequences by finding J-motifs and necessary downstream splice donor
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define variables
-BLASTN="/stor/work/Georgiou/Sharing_Folder/BLASTplus_2.15.0/ncbi-blast-2.15.0+/bin/blastn"
+BLASTN="$1"
 QUERY_FILE="IGxJ_all.fasta"
 DB_NAME="../../ferret_blast_db/ferret_blastable"
 OUTPUT_FILE="IGxJ_hits.tsv"
@@ -17,6 +17,16 @@ STRAND="both"
 WORD_SIZE="11"
 OUT_FORMAT="6 qaccver saccver pident length mismatch gapopen qstart qend sstart send evalue bitscore"
 HEADER="query acc.ver\tsubject acc.ver\t% identity\talignment length\tmismatches\tgap opens\tq. start\tq. end\ts. start\ts. end\tevalue\tbit score"
+
+if [ -z "$BLASTN" ]; then
+    echo "Usage: $0 /path/to/blastn" >&2
+    exit 1
+fi
+
+if [ ! -x "$BLASTN" ]; then
+    echo "BLASTN executable is missing or not executable: $BLASTN" >&2
+    exit 1
+fi
 
 # Run BLASTn
 $BLASTN -query $QUERY_FILE -db $DB_NAME -outfmt "$OUT_FORMAT" -evalue $EVALUE -max_target_seqs $MAX_TARGET_SEQS -dust $DUST -soft_masking $SOFT_MASKING -penalty $PENALTY -reward $REWARD -gapopen $GAP_OPEN -gapextend $GAP_EXTEND -strand $STRAND -word_size $WORD_SIZE -out $OUTPUT_FILE

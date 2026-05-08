@@ -1,4 +1,18 @@
-/stor/work/Georgiou/Sharing_Folder/BLASTplus_2.15.0/ncbi-blast-2.15.0+/bin/blastn \
+#!/bin/bash
+
+BLASTN="$1"
+
+if [ -z "$BLASTN" ]; then
+    echo "Usage: $0 /path/to/blastn" >&2
+    exit 1
+fi
+
+if [ ! -x "$BLASTN" ]; then
+    echo "BLASTN executable is missing or not executable: $BLASTN" >&2
+    exit 1
+fi
+
+"$BLASTN" \
 -query heavy/2_blast/J-3pRACE_HeavyChain_filtered.fasta \
 -task megablast \
 -db heavy/2_blast/IMGT_heavy_exons_db/IMGT_heavy_exons_fixed.fasta \

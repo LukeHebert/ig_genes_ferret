@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 import argparse
+import datetime
 import os
 import subprocess
-import datetime
+import sys
 from Bio import SeqIO
 
 def parse_args():
@@ -24,12 +25,31 @@ def parse_args():
         required=True,
         help="Minimum average quality threshold to retain reads after trimming."
     )
+    parser.add_argument(
+        "--cutadapt_path",
+        required=True,
+        help="Path to the Cutadapt executable."
+    )
     return parser.parse_args()
 
 
-def run_cutadapt(input_fastq, trim_quality, output_trimmed_fastq):
+def validate_file(path, description):
+    """Raise a clear error if a required file does not exist."""
+    if not os.path.isfile(path):
+        raise FileNotFoundError(f"{description} was not found: {path}")
+    return os.path.abspath(path)
+
+
+def validate_executable(path, description):
+    """Raise a clear error if a required executable path is invalid."""
+    executable_path = validate_file(path, description)
+    if not os.access(executable_path, os.X_OK):
+        raise PermissionError(f"{description} is not executable: {executable_path}")
+    return executable_path
+
+
+def run_cutadapt(input_fastq, trim_quality, output_trimmed_fastq, cutadapt_path):
     """Run cutadapt to trim reads at both ends based on the specified quality cutoff."""
-    cutadapt_path = "/usr/local/bin/cutadapt"
     cmd = [
         cutadapt_path,
         "-q", str(trim_quality),    # One value applies trimming to both 5' and 3' ends
@@ -88,8 +108,8 @@ def main():
     avg_quality = args.avg_quality
 
     # Validate input
-    if not os.path.isfile(input_fastq):
-        raise FileNotFoundError(f"Input FASTQ file '{input_fastq}' does not exist.")
+    input_fastq = validate_file(input_fastq, "Input FASTQ file")
+    cutadapt_path = validate_executable(args.cutadapt_path, "Cutadapt executable")
 
     # Paths and naming
     output_dir = os.path.dirname(os.path.abspath(input_fastq))
@@ -106,7 +126,7 @@ def main():
     original_count = count_reads_in_fastq(input_fastq)
 
     # Run cutadapt
-    cmd = run_cutadapt(input_fastq, trim_quality, trimmed_fastq)
+    cmd = run_cutadapt(input_fastq, trim_quality, trimmed_fastq, cutadapt_path)
 
     # Count reads after trimming
     trimmed_count = count_reads_in_fastq(trimmed_fastq)
@@ -120,4 +140,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except (FileNotFoundError, PermissionError) as error:
+        print(error, file=sys.stderr)
+        sys.exit(1)
