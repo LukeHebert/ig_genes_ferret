@@ -34,4 +34,4 @@ Non-python package bioinformatics tools called by the scripts in this repository
 - [PEAR](https://github.com/tseemann/PEAR) (version 0.9.11)
 - [SignalP](https://services.healthtech.dtu.dk/services/SignalP-5.0/) (version 5.0b)
 
-The scripts in this repository now expect you to provide the paths to these external tools on the command line, rather than storing machine-specific tool paths in the code.
+The scripts in this repository expect you to provide the paths to these external tools using command line arguments.
