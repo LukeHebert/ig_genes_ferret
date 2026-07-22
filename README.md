@@ -1,5 +1,5 @@
 # ig_genes_ferret
-A detailed workflow of how I (and colleagues) predicted _Mustela mutorius furo_ (the domestic ferret) immunoglobulin (Ig) genes using the ferret genome assembly ASM1176430v1.1 and then mapped ferret B cell receptor sequencing data to those predictions.
+A detailed workflow of how I (and colleagues) predicted _Mustela mutorius furo_ (the domestic ferret) immunoglobulin (Ig) genes using the ferret genome assembly ASM1176430v1.1 and then mapped ferret B cell receptor transcript sequencing data to those predictions.
 
 ## Important note
 This repository is best suited for reproducing the results associated with the author's ferret immunoglobulin gene publication:
